@@ -1,17 +1,24 @@
 # socket app
-import socket, random, sys, ipaddress, time, os
+import socket, sys, ipaddress, time, os
+
+
+try:
+    sys.argv[1]
+except:
+    print("pass 'client' or 'server' for the respective mode")
+    exit()
 
 if sys.argv[1] == "server":
 
     HOST = "0.0.0.0"
     PORT = 20001
-    msgToClient = str.encode("Hello UDP Client")
+    msgToClient = str.encode("Hello UDP client")
 
     # Create a datagram socket at server side
     s = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # for Errno 98: Address already in use
 
-    # Bind socket to localhost and port
+    # Bind socket to 0.0.0.0 and specified port no.
     s.bind((HOST, PORT))
     print("UDP server started")
 
@@ -20,12 +27,18 @@ if sys.argv[1] == "server":
     # Listen for incoming datagrams
     while(True):
         msgFromClient = s.recvfrom(512)
-
         message = msgFromClient[0]
         address = msgFromClient[1]
 
-        print("Message from Client: '{}'".format(message.decode()))
-        print("Client: {}".format(address))
+        try:
+            if isinstance(   int(message.decode()), int   ):
+                print("Value from client: '{}'".format(int(message.decode())))
+                print("Client: {}".format(address))
+            elif isinstance(   float(message.decode()), float   ):
+                print("Value from client: '{}'".format(float(message.decode())))
+                print("Client: {}".format(address))
+        except:
+            print("input must be a number")
 
         # Sending a reply to client
         s.sendto(msgToClient, address)
@@ -36,7 +49,8 @@ elif sys.argv[1] == "client":
 
     try:
         ipaddress.ip_address(sys.argv[2])
-        msgToServer = str.encode("Hello UDP Server")
+        string = str(" ".join(sys.argv[3:]))
+        msgToServer = str.encode(string)
         HOST = sys.argv[2]
         PORT = 20001
 
@@ -57,12 +71,8 @@ elif sys.argv[1] == "client":
         except socket.timeout:
             print("No reply from server")
 
-
-
-
     except:
-        print("you must pass a valid ip address")
-
+        print("you must pass a valid ip address and string message")
 
 else:
     print("invalid command")
