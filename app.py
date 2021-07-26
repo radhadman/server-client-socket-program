@@ -2,12 +2,8 @@
 import socket, sys, ipaddress, time, os
 
 # initial check for 'client' or 'server' argument
-try:
-    sys.argv[1]
-except:
-    print("pass 'client' or 'server' for the respective mode")
+if len(sys.argv) == 1:
     exit()
-
 
 # run in server mode
 if sys.argv[1] == "server":
@@ -23,33 +19,36 @@ if sys.argv[1] == "server":
     s.bind((HOST, PORT))
     print("UDP server started")
 
+    try:
+        # Listen for incoming datagrams
+        while(True):
+            msgFromClient = s.recvfrom(512)
+            message = msgFromClient[0]
+            address = msgFromClient[1]
+            msgToClient = ""
+            decoded = message.decode()
 
-    # Listen for incoming datagrams
-    while(True):
-        msgFromClient = s.recvfrom(512)
-        message = msgFromClient[0]
-        address = msgFromClient[1]
-        msgToClient = ""
-        decoded = message.decode()
+            # check for valid float, then reply with two times that value
+            try:
+                isinstance(float(decoded), float)
+                if isinstance(float(decoded), float):
+                    print("Value from client: '{}'".format(float(decoded)))
+                    print("Client: {}".format(address))
+                    msgToClient = str(2*float(decoded))
 
-        # check for valid float, then reply with two times that value
-        try:
-            isinstance(float(decoded), float)
-            if isinstance(float(decoded), float):
-                print("Value from client: '{}'".format(float(decoded)))
+                    # Sending value reply
+                    s.sendto(str.encode(msgToClient), address)
+
+            except:
+                print("input was not a number")
+                print("Message from client: '{}'".format(decoded))
                 print("Client: {}".format(address))
-                msgToClient = str(2*float(decoded))
 
-                # Sending value reply
-                s.sendto(str.encode(msgToClient), address)
+                # send string reply
+                s.sendto(str.encode(decoded), address)
 
-        except:
-            print("input was not a number")
-            print("Message from client: '{}'".format(decoded))
-            print("Client: {}".format(address))
-
-            # send string reply
-            s.sendto(str.encode(decoded), address)
+    except KeyboardInterrupt:
+        exit()
 
 # run in client mode
 elif sys.argv[1] == "client":
